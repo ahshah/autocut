@@ -1,0 +1,54 @@
+version: "3"
+services:
+    autocut:
+        image: "prod/autocut:18.10.28"
+        environment:
+            - LOCAL_USER_ID=1000
+        volumes:
+            - ~/ws/autocut/src:/home/user/src
+            - source:/mnt/src
+        command: "python3 /usr/local/bin/autocut.py --src /mnt/src --dst /mnt/dst --poll"
+        # command: "sleep 3600"
+        user: root
+        container_name: "Autcut"
+
+        stdin_open: true
+        tty: true
+
+    tests:
+        image: "local/autocut:18.10.28"
+        environment:
+            - LOCAL_USER_ID=1000
+        volumes:
+            - ~/ws/autocut/src:/home/user/src
+            - ~/ws/autocut/test:/home/user/test
+            - source:/home/user/videoSrc
+        command: "pytest -s /home/user/test/"
+              #        command: "sleep 3600"
+        user: root
+        container_name: "AutoCutTest"
+
+        stdin_open: true
+        tty: true
+
+    test_two:
+        image: "local/autocut:18.10.28"
+        environment:
+            - LOCAL_USER_ID=1000
+        volumes:
+            - ~/ws/autocut/src:/home/user/src
+            - ~/ws/autocut/test:/home/user/test
+        command: "pytest -s /home/user/test/test_pytz_fakefs_no_exception.py"
+        #command: "sleep 3600"
+        user: root
+        container_name: "AutoCutTest"
+
+        stdin_open: true
+        tty: true
+
+
+volumes:
+    source:
+        driver: cifs
+        driver_opts:
+            share: drusus.local/Vault6/src
