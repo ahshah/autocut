@@ -17,10 +17,10 @@ COPY build/bashrc /root/.bashrc
 RUN echo "source .bashrc" > /home/user/.bash_profile
 RUN echo "source .bashrc" > /root/.bash_profile
 
-RUN apt-get install -y python3 python3-pip ffmpeg
+RUN apt-get install -y python3 python3-pip ffmpeg exiftool
 
 RUN apt-get remove -y python2.7
 RUN apt-get autoremove -y
-RUN pip3 install -U ffmpeg-python pytz
+RUN pip3 install -U ffmpeg-python pytz ocrd-pyexiftool
 
 COPY build/autocut.py /usr/local/bin/

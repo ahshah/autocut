@@ -1,4 +1,5 @@
-FROM prod/autocut:18.10.28
+ARG DATE
+FROM prod/autocut:$DATE
 
 RUN rm /usr/local/bin/autocut.py
 RUN pip3 install -U pytest mock pytest-mock pyfakefs

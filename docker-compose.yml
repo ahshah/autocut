@@ -1,13 +1,13 @@
 version: "3"
 services:
     autocut:
-        image: "prod/autocut:18.10.28"
+        image: "prod/autocut:18.10.31"
         environment:
             - LOCAL_USER_ID=1000
         volumes:
             - ~/ws/autocut/src:/home/user/src
             - source:/mnt/src
-        command: "python3 /usr/local/bin/autocut.py --src /mnt/src --dst /mnt/dst --poll"
+        command: "python3 /usr/dev/bin/autocut.py --src /mnt/src --dst /mnt/src"
         # command: "sleep 3600"
         user: root
         container_name: "Autcut"
@@ -16,7 +16,7 @@ services:
         tty: true
 
     tests:
-        image: "local/autocut:18.10.28"
+        image: "dev/autocut:18.10.31"
         environment:
             - LOCAL_USER_ID=1000
         volumes:
@@ -31,22 +31,35 @@ services:
         stdin_open: true
         tty: true
 
-    test_two:
-        image: "local/autocut:18.10.28"
+    single_run:
+        image: "dev/autocut:18.10.31"
         environment:
             - LOCAL_USER_ID=1000
         volumes:
             - ~/ws/autocut/src:/home/user/src
             - ~/ws/autocut/test:/home/user/test
-        command: "pytest -s /home/user/test/test_pytz_fakefs_no_exception.py"
-        #command: "sleep 3600"
+            - source:/home/user/videoSrc
+        command: "python3 /home/user/src/autocut.py --src /home/user/videoSrc --dst /home/user/videoSrc"
         user: root
-        container_name: "AutoCutTest"
+        container_name: "AutoCutSingleRun"
 
         stdin_open: true
         tty: true
 
+    debug:
+        image: "dev/autocut:18.10.31"
+        environment:
+            - LOCAL_USER_ID=1000
+        volumes:
+            - ~/ws/autocut/src:/home/user/src
+            - ~/ws/autocut/test:/home/user/test
+            - source:/home/user/videoSrc
+        command: "/bin/sleep 3600"
+        user: root
+        container_name: "AutoCutDebug"
 
+        stdin_open: true
+        tty: true
 volumes:
     source:
         driver: cifs
