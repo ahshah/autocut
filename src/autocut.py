@@ -3,6 +3,7 @@ import time
 from pytz import timezone
 import os
 from datetime import datetime
+from functools import reduce
 import collections
 
 import ffmpeg
@@ -11,6 +12,8 @@ import exiftool
 import json
 from datetime import timedelta
 from VideoSegment import VideoSegment
+from Scheduling import SegmentScheduler, ScheduledEvent
+from cutter import SegmentJoiner, SegmentCutter
 
 FileDate = collections.namedtuple('FileDate', ['fpath', 'date', 'start_time', 'end_time', 'duration'])
 
@@ -61,14 +64,15 @@ def buildSegments(args):
             continue
 
         segment = VideoSegment(m)
-        segDate = segment.getDate()
+        segDate = segment.getDateStr()
         if not segment.isWednesday():
             continue
         if segDate not in days:
             days[segDate]= []
-        days[segDate].append(segment.__dict__())
+        days[segDate].append(segment)
 
-    print("Got dict:" + json.dumps(days, sort_keys=True, indent=4))
+    return days
+#    print("Got dict:" + json.dumps(days, sort_keys=True, indent=4))
 
 def dumpExifInfo(args):
     files = []
@@ -94,8 +98,48 @@ def main():
         print ('Failed sanity check, looping..')
         time.sleep(5)
 #    concatenateVideos(args)
-    dumpExifInfo(args)
-    buildSegments(args)
+#    dumpExifInfo(args)
+    segments = buildSegments(args)
+    events = createEvents()
+    for k, v in segments.items():
+        scheduler = SegmentScheduler(args.directoryTmp, events)
+        scheduler.set_date(v[0].getStartTime())
+
+        cutter = SegmentCutter(args.directoryTmp)
+        joiner = SegmentJoiner(args.directoryDst, args.directoryTmp)
+        ret = scheduler.calculate(v)
+
+        for team, cutList in ret.items():
+            for cut in cutList:
+                cutter.run(cut, args.dryRun)
+            joiner.ffmpegJoin(team, cutList, args.dryRun)
+
+            for cut in cutList:
+                if shouldDelete(cut, events, args):
+                    print("Would unlink: " + cut.cutFilePath)
+                    #os.unlink(cut.cutFilePath)
+                else:
+                    print("Would NOT unlink: " + cut.cutFilePath)
+
+
+def shouldDelete(cut, events, args):
+    cutParentDirectory = os.path.dirname(cut.cutFilePath)
+    cutIsNotTheSameFileAsSegment = cut.cutFilePath != cut.segment.filePath 
+    cutParentDirectoryIsInTmpDirectory = cutParentDirectory.startswith(args.directoryTmp)
+    cutIsFile = os.path.isfile(cut.cutFilePath)
+    cutFileNameBeginsWithEvent = reduce(lambda x, y: x or y, map(lambda ev: os.path.basename(cut.cutFilePath).startswith(ev.name), events))
+    if cutIsNotTheSameFileAsSegment and cutParentDirectoryIsInTmpDirectory and cutIsFile and cutFileNameBeginsWithEvent:
+        return True
+    else:
+        return False
+
+
+def createEvents():
+    events = []
+    events.append(ScheduledEvent(name='Alegria',  hour=6, minute=25, second=0, PM=True, duration='1:45:00'))
+    events.append(ScheduledEvent(name='Footwork', hour=8, minute=00, second=0, PM=True, duration='1:10:00'))
+    events.append(ScheduledEvent(name='Ritmo',    hour=9, minute=00, second=0, PM=True, duration='1:40:00'))
+    return events
 
 def getTimeStr():
     try:
@@ -138,15 +182,18 @@ def parseArguments():
     parser = argparse.ArgumentParser(description='Autocut Argument Parser')
     parser.add_argument('--src', dest='directorySrc', nargs=1, required=True,
             help='The source directory where to search for files to merge and join')
-    parser.add_argument('--dst', dest='directoryDst', nargs=1, required=False,
+    parser.add_argument('--dst', dest='directoryDst', nargs=1, required=True,
             help='The destination directory where to move files that have ' +
             'been cut and joined')
+    parser.add_argument('--tmp', dest='directoryTmp', nargs=1, required=True,
+            help='The directory to use for temporary cuts')
     parser.add_argument('--dry', dest='dryRun', action='store_true',
             help='Dry run, do not rename, or move anything. Print each the' +
             'timestamp of each cut segment')
     parsed_args = parser.parse_args()
     parsed_args.directorySrc = os.path.abspath(parsed_args.directorySrc[0])
     parsed_args.directoryDst = os.path.abspath(parsed_args.directoryDst[0])
+    parsed_args.directoryTmp = os.path.abspath(parsed_args.directoryTmp[0])
     return parsed_args
 
 if __name__ == '__main__':

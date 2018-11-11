@@ -40,8 +40,23 @@ class VideoSegment:
             return True
         return False
 
-    def getDate(self):
+    def getDateStr(self):
         return self.timeStart.strftime('%Y-%m-%d')
+
+    def getStartTime(self):
+        return self.timeStart;
+
+    def getStartTimeStr(self):
+        return self.timeStart.strftime('%Y-%m-%d %H:%M:%S %Z');
+
+    def getStartTimeStrForFileName(self):
+        return self.timeStart.strftime('%Y%m%d_%H%M%S');
+
+    def getEndTime(self):
+        return self.timeEnd;
+
+    def getDuration(self):
+        return self.duration;
 
     def __str__(self):
         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
@@ -53,6 +68,7 @@ class VideoSegment:
 
     def __repr__(self):
         return self.__str__()
+
     def __dict__(self):
         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
         ret = {}

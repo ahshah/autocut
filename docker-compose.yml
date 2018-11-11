@@ -31,6 +31,23 @@ services:
         stdin_open: true
         tty: true
 
+    single_test:
+        image: "dev/autocut:18.10.31"
+        environment:
+            - LOCAL_USER_ID=1000
+        volumes:
+            - ~/ws/autocut/src:/home/user/src
+            - ~/ws/autocut/test:/home/user/test
+            - source:/home/user/videoSrc
+        command: "pytest -s /home/user/$TEST_FILE"
+              #command: "ls -latr /home/user/$TEST_FILE"
+        user: root
+        container_name: "AutoCutTest"
+
+        stdin_open: true
+        tty: true
+
+
     single_run:
         image: "dev/autocut:18.10.31"
         environment:
@@ -39,7 +56,9 @@ services:
             - ~/ws/autocut/src:/home/user/src
             - ~/ws/autocut/test:/home/user/test
             - source:/home/user/videoSrc
-        command: "python3 /home/user/src/autocut.py --src /home/user/videoSrc --dst /home/user/videoSrc"
+            - tmp:/home/user/videoTmp
+            - out:/home/user/videoOut
+        command: "python3 /home/user/src/autocut.py --src /home/user/videoSrc --dst /home/user/videoOut --tmp /home/user/videoTmp $DRY_FLAG"
         user: root
         container_name: "AutoCutSingleRun"
 
@@ -54,6 +73,8 @@ services:
             - ~/ws/autocut/src:/home/user/src
             - ~/ws/autocut/test:/home/user/test
             - source:/home/user/videoSrc
+            - tmp:/home/user/videoTmp
+            - out:/home/user/videoOut
         command: "/bin/sleep 3600"
         user: root
         container_name: "AutoCutDebug"
@@ -64,4 +85,12 @@ volumes:
     source:
         driver: cifs
         driver_opts:
-            share: drusus.local/Vault6/src
+            share: drusus.local/Vault6/MAH
+    tmp:
+        driver: cifs
+        driver_opts:
+            share: drusus.local/Vault6/src.tmp
+    out:
+        driver: cifs
+        driver_opts:
+            share: drusus.local/Vault6/src/output
