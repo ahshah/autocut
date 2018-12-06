@@ -83,8 +83,8 @@ class SegmentJoiner:
             p = subprocess.Popen(cmdList, stdin=stdin_stream, stdout=stdout_stream, stderr=stderr_stream)
             out, err = p.communicate(input=b'y\r')
             retcode = p.poll()
-            os.unlink(outputFile)
-        print("Would unlink list file: " + outputFile)
+            os.unlink(listFile)
+        print("Would unlink list file: " + listFile)
 
 
 

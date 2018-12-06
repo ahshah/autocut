@@ -50,11 +50,13 @@ def concatenateVideos(args):
 
 
 def buildSegments(args):
-    files = []
+#    files = []
     days = {}
-    for fileName in os.listdir(args.directorySrc):
-        fileName = os.path.join(args.directorySrc, fileName)
-        files.append(fileName)
+    files = [os.path.join(args.directorySrc, f) for f in os.listdir(args.directorySrc) if os.path.isfile(os.path.join(args.directorySrc, f))]
+    for fileName in files:
+        print ("Got: " + fileName)
+#        fileName = os.path.join(args.directorySrc, fileName)
+#        files.append(fileName)
 
     with exiftool.ExifTool() as et:
         metadata = et.get_metadata_batch(files)
@@ -117,7 +119,7 @@ def main():
             for cut in cutList:
                 if shouldDelete(cut, events, args):
                     print("Would unlink: " + cut.cutFilePath)
-                    #os.unlink(cut.cutFilePath)
+                    os.unlink(cut.cutFilePath)
                 else:
                     print("Would NOT unlink: " + cut.cutFilePath)
 
@@ -137,8 +139,9 @@ def shouldDelete(cut, events, args):
 def createEvents():
     events = []
     events.append(ScheduledEvent(name='Alegria',  hour=6, minute=25, second=0, PM=True, duration='1:45:00'))
-    events.append(ScheduledEvent(name='Footwork', hour=8, minute=00, second=0, PM=True, duration='1:10:00'))
-    events.append(ScheduledEvent(name='Ritmo',    hour=9, minute=00, second=0, PM=True, duration='1:40:00'))
+#    events.append(ScheduledEvent(name='Footwork', hour=8, minute=00, second=0, PM=True, duration='1:10:00'))
+#    events.append(ScheduledEvent(name='Ritmo',    hour=9, minute=00, second=0, PM=True, duration='2:05:00'))
+    events.append(ScheduledEvent(name='Ritmo',    hour=8, minute=00, second=0, PM=True, duration='2:15:00'))
     return events
 
 def getTimeStr():
